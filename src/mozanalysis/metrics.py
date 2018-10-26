@@ -19,6 +19,9 @@ p5.func_name = "p5"
 p25 = partial(np.percentile, q=25)
 p25.func_name = "p25"
 
+p50 = partial(np.percentile, q=50)
+p50.func_name = "p50"
+
 p75 = partial(np.percentile, q=75)
 p75.func_name = "p75"
 
@@ -54,7 +57,7 @@ class MetricDefinition(object):
 
     """
 
-    stats = [p5, p25, np.mean, p75, p95]
+    stats = [np.mean, p5, p25, p50, p75, p95]
 
 
 sum_total_uris_expr = F.expr(
