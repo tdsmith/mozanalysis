@@ -12,11 +12,16 @@ class ExperimentAnalysis(object):
         self.sc = dataset._sc
         self._dataset = dataset
         self._metrics = None
+        self._date_aggregate_by = "submission_date_s3"
         self._aggregate_by = "client_id"
         self._split_by = "experiment_branch"
 
     def metrics(self, *metrics):
         self._metrics = metrics
+        return self
+
+    def date_aggregate_by(self, column):
+        self._date_aggregate_by = column
         return self
 
     def aggregate_by(self, column):
@@ -39,7 +44,7 @@ class ExperimentAnalysis(object):
         return self.analyze(df)
 
     def aggregate_per_client_daily(self, dataset):
-        cols = set([self._aggregate_by, self._split_by, "submission_date_s3"])
+        cols = set([self._aggregate_by, self._split_by, self._date_aggregate_by])
         aggs = set()
 
         for m in self._metrics:
@@ -48,7 +53,7 @@ class ExperimentAnalysis(object):
 
         df = (
             dataset.select(*cols)
-            .groupBy(self._aggregate_by, self._split_by, "submission_date_s3")
+            .groupBy(self._aggregate_by, self._split_by, self._date_aggregate_by)
             .agg(*aggs)
         )
         return df

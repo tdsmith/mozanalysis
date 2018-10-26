@@ -12,7 +12,13 @@ from mozanalysis.experiments import ExperimentAnalysis
 def test_chaining():
     dataset = mock.Mock()
     dataset._sc = "sc"
-    exp = ExperimentAnalysis(dataset).metrics("metric1", "metric2").split_by("split")
+    exp = (
+        ExperimentAnalysis(dataset)
+        .metrics("metric1", "metric2")
+        .date_aggregate_by("other_date_column")
+        .split_by("split")
+    )
+    assert exp._date_aggregate_by == "other_date_column"
     assert exp._aggregate_by == "client_id"  # The default.
     assert exp._metrics == ("metric1", "metric2")
     assert exp._split_by == "split"
