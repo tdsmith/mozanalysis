@@ -73,8 +73,8 @@ sum_active_hours_expr = F.expr(
 ).alias("sum_active_hours")
 
 
-class EngagementDailyHours(MetricDefinition):
-    name = "Engagement Daily Hours"
+class EngagementAvgDailyHours(MetricDefinition):
+    name = "Engagement Avg Daily Hours"
     daily_columns = [F.col("subsession_length")]
     daily_aggregations = [sum_total_hours_expr]
     columns = [F.col("sum_total_hours")]
@@ -82,8 +82,8 @@ class EngagementDailyHours(MetricDefinition):
     final_expression = F.col("daily_hours")
 
 
-class EngagementDailyActiveHours(MetricDefinition):
-    name = "Engagement Daily Active Hours"
+class EngagementAvgDailyActiveHours(MetricDefinition):
+    name = "Engagement Avg Daily Active Hours"
     daily_columns = [F.col("active_ticks")]
     daily_aggregations = [sum_active_hours_expr]
     columns = [F.col("sum_active_hours")]

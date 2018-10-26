@@ -59,16 +59,16 @@ def _generate_data(spark, client_branches):
 def test_engagement_metrics(spark):
     # Testing all engagement metrics in one pass to reduce amount Spark testing time.
     from mozanalysis.metrics import (
-        EngagementDailyHours,
-        EngagementDailyActiveHours,
+        EngagementAvgDailyHours,
+        EngagementAvgDailyActiveHours,
         EngagementHourlyUris,
         EngagementIntensity,
     )
 
     # Only compute the means across all stats.
     metrics = [
-        EngagementDailyHours,
-        EngagementDailyActiveHours,
+        EngagementAvgDailyHours,
+        EngagementAvgDailyActiveHours,
         EngagementHourlyUris,
         EngagementIntensity,
     ]
