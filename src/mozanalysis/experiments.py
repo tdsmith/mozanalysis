@@ -44,6 +44,12 @@ class ExperimentAnalysis(object):
         return self.analyze(df)
 
     def aggregate_per_client_daily(self, dataset):
+        """
+        Returns a pyspark dataframe of the data aggregated by the column
+        defined in the `date_aggregate_by` call, which is
+        "submission_date_s3" by default.
+
+        """
         cols = set([self._aggregate_by, self._split_by, self._date_aggregate_by])
         aggs = set()
 
@@ -59,6 +65,19 @@ class ExperimentAnalysis(object):
         return df
 
     def analyze(self, dataset):
+        """
+        Returns a panda dataframe for the provided metrics.
+
+        This also splits the dataset into multiple groups using the column
+        defined in the `split_by` call, which is "experiment_branch" by
+        default.
+
+        Arguments:
+
+        - dataset (a pyspark Dataframe) : Expects a dataframe with the columns
+            defined in the `MetricDefinition`s `columns` field.
+
+        """
         data = []
 
         splits = [
