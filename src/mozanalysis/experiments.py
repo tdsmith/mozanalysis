@@ -85,6 +85,8 @@ class ExperimentAnalysis(object):
             for r in dataset.select(self._split_by).distinct().collect()
         ]
 
+        dataset.cache()
+
         for m in self._metrics:
             # TODO: Use a lib or make this more robust.
             metric_name = m.name.replace(" ", "_").lower()
