@@ -3,6 +3,7 @@
 # file, You can obtain one at http://mozilla.org/MPL/2.0/.
 import mock
 import numpy as np
+import pyspark.sql.functions as F
 
 # NOTE: The metrics are not imported here b/c they are evaluated and require a
 # spark context, which isn't available outside the test functions.
@@ -62,8 +63,67 @@ def _generate_data(spark, client_branches):
     )
 
 
+def test_split_by_values(spark):
+    # Test that we get the correct branches back.
+    df = _generate_data(
+        spark, {"aaaa": "control", "bbbb": "variant", "cccc": "control"}
+    )
+    branches = ExperimentAnalysis(df).get_split_by_values(df)
+    assert sorted(branches) == ["control", "variant"]
+
+
+def test_aggregate_per_client_daily(spark):
+    # Test the daily aggregation returns 1 row per date.
+    from mozanalysis.metrics import EngagementAvgDailyHours
+
+    df = _generate_data(spark, {"aaaa": "control", "bbbb": "variant"})
+    agg_df = (
+        ExperimentAnalysis(df)
+        .metrics(EngagementAvgDailyHours)
+        .aggregate_per_client_daily(df)
+    )
+    # Assert we have the expected columns.
+    assert sorted(agg_df.columns) == sorted(
+        ["client_id", "experiment_branch", "submission_date_s3", "sum_total_hours"]
+    )
+    # Assert the original dataframe has multiple rows per client per day.
+    assert (
+        df.filter(F.col("submission_date_s3") == "20180101")
+        .filter(F.col("client_id") == "aaaa")
+        .count()
+        == 2
+    )
+    # Assert we have 1 row per client per day after.
+    assert (
+        agg_df.filter(F.col("submission_date_s3") == "20180101")
+        .filter(F.col("client_id") == "aaaa")
+        .count()
+        == 1
+    )
+    # Spot check the value produced.
+    expected = (
+        (
+            df.filter(F.col("client_id") == "aaaa")
+            .filter(F.col("submission_date_s3") == "20180109")
+            .agg(F.expr("SUM(subsession_length / 3600)").alias("sum_total_hours"))
+        )
+        .first()
+        .toDict()["sum_total_hours"]
+    )
+    actual = (
+        (
+            agg_df.filter(F.col("client_id") == "aaaa").filter(
+                F.col("submission_date_s3") == "20180109"
+            )
+        )
+        .first()
+        .toDict()["sum_total_hours"]
+    )
+    assert actual == expected
+
+
 def test_engagement_metrics(spark):
-    # Testing all engagement metrics in one pass to reduce amount Spark testing time.
+    # Testing all engagement metrics in one pass to reduce amount of Spark testing time.
     from mozanalysis.metrics import (
         EngagementAvgDailyHours,
         EngagementAvgDailyActiveHours,
@@ -112,10 +172,3 @@ def test_engagement_metrics(spark):
     assert np.allclose(control_values[3], 4.75 / (1 / 3600.0 + 35.625))
     # Note: 13.75 is the sum of the total hours, 103.125 is the sum of the active hours.
     assert np.allclose(variant_values[3], 13.75 / (1 / 3600.0 + 103.125))
-
-
-def test_split_by_values(spark):
-    df = _generate_data(spark, {"aaaa": "control", "bbbb": "variant", "cccc": "control"})
-    branches = ExperimentAnalysis(df).get_split_by_values(df)
-    assert sorted(branches) == ["control", "variant"]
-
