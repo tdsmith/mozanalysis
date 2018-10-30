@@ -43,6 +43,16 @@ class ExperimentAnalysis(object):
         df = self.aggregate_per_client_daily(self._dataset)
         return self.analyze(df)
 
+    def get_split_by_values(self, dataset):
+        """
+        Returns the dictinct column values of the `split_by` column.
+
+        """
+        return [
+            r[self._split_by]
+            for r in dataset.select(self._split_by).distinct().collect()
+        ]
+
     def aggregate_per_client_daily(self, dataset):
         """
         Returns a pyspark dataframe of the data aggregated by the column
@@ -78,14 +88,10 @@ class ExperimentAnalysis(object):
             defined in the `MetricDefinition`s `columns` field.
 
         """
-        data = []
-
-        splits = [
-            r[self._split_by]
-            for r in dataset.select(self._split_by).distinct().collect()
-        ]
-
         dataset.cache()
+
+        data = []
+        branches = self.get_split_by_values(dataset)
 
         for m in self._metrics:
             # TODO: Use a lib or make this more robust.
@@ -103,18 +109,18 @@ class ExperimentAnalysis(object):
                     ]
                 )
             )
-            for split in splits:
+            for branch in branches:
                 for stat in m.stats:
                     bs = bootstrap(
                         self.sc,
-                        agg_df.filter(F.col(self._split_by) == split)
+                        agg_df.filter(F.col(self._split_by) == branch)
                         .select(metric_name)
                         .collect(),
                         stat,
                     )
                     data.append(
                         {
-                            "branch": split,
+                            "branch": branch,
                             "metric_name": metric_name,
                             "stat_name": stat.func_name,
                             "stat_value": bs["calculated_value"],

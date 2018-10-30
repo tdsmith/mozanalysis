@@ -112,3 +112,10 @@ def test_engagement_metrics(spark):
     assert np.allclose(control_values[3], 4.75 / (1 / 3600.0 + 35.625))
     # Note: 13.75 is the sum of the total hours, 103.125 is the sum of the active hours.
     assert np.allclose(variant_values[3], 13.75 / (1 / 3600.0 + 103.125))
+
+
+def test_split_by_values(spark):
+    df = _generate_data(spark, {"aaaa": "control", "bbbb": "variant", "cccc": "control"})
+    branches = ExperimentAnalysis(df).get_split_by_values(df)
+    assert sorted(branches) == ["control", "variant"]
+
