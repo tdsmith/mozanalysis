@@ -108,7 +108,7 @@ def test_aggregate_per_client_daily(spark):
             .agg(F.expr("SUM(subsession_length / 3600)").alias("sum_total_hours"))
         )
         .first()
-        .toDict()["sum_total_hours"]
+        .asDict()["sum_total_hours"]
     )
     actual = (
         (
@@ -117,7 +117,7 @@ def test_aggregate_per_client_daily(spark):
             )
         )
         .first()
-        .toDict()["sum_total_hours"]
+        .asDict()["sum_total_hours"]
     )
     assert actual == expected
 
